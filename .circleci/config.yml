@@ -7,9 +7,6 @@ jobs:
   publish_image:
     docker:
       - image: cimg/base:stable
-        auth:
-          username: flashlight13
-          password: $DOCKERHUB_PASSWORD
     parameters:
       godotVersion:
         type: string
@@ -20,7 +17,7 @@ jobs:
 
       - setup_remote_docker:
           version: 20.10.18
-
+      - run: docker login -u flashlight13 -p $DOCKERHUB_PASSWORD
       - run: docker build --tag flashlight13/godot:<< parameters.godotVersion >> --build-arg ubuntuVersion=<< parameters.ubuntuVersion >> --build-arg godotVersion=<< parameters.godotVersion >> -f godot.dockerfile .
       - run: docker push flashlight13/godot:<< parameters.godotVersion >>
 
