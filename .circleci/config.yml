@@ -1,5 +1,8 @@
 version: 2.1
 
+orbs:
+  docker: circleci/docker@2.2.0
+
 jobs:
   publish_image:
     docker:
@@ -18,8 +21,8 @@ jobs:
       - setup_remote_docker:
           version: 20.10.18
 
-      - run: docker build --tag flashlight13/godot:$godotVersion --build-arg ubuntuVersion=$ubuntuVersion --build-arg godotVersion=$godotVersion -f godot.dockerfile .
-      - run: docker push flashlight13/godot:$godotVersion
+      - run: docker build --tag flashlight13/godot:<< parameters.godotVersion >> --build-arg ubuntuVersion=<< parameters.ubuntuVersion >> --build-arg godotVersion=<< parameters.godotVersion >> -f godot.dockerfile .
+      - run: docker push flashlight13/godot:<< parameters.godotVersion >>
 
 workflows:
   publish-workflow:
