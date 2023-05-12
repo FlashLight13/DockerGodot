@@ -1,0 +1,29 @@
+version: 2.1
+
+jobs:
+  publish_image:
+    docker:
+      - image: cimg/base:stable
+        auth:
+          username: flashlight13
+          password: $DOCKERHUB_PASSWORD
+    parameters:
+      godotVersion:
+        type: string
+      ubuntuVersion:
+        type: string
+    steps:
+      - checkout
+
+      - setup_remote_docker:
+          version: 20.10.18
+
+      - run: docker build --tag flashlight13/godot:$godotVersion --build-arg ubuntuVersion=$ubuntuVersion --build-arg godotVersion=$godotVersion -f godot.dockerfile .
+      - run: docker push flashlight13/godot:$godotVersion
+
+workflows:
+  publish-workflow:
+    jobs:
+      - publish_image:
+          godotVersion: "4.0.2"
+          ubuntuVersion: "23.04"
