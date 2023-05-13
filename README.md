@@ -4,7 +4,7 @@
 ![Docker Image Version (latest by date)](https://img.shields.io/docker/v/flashlight13/godot)
 ![Docker Image Size (tag)](https://img.shields.io/docker/image-size/flashlight13/godot/4.0.2)
 
-# Docker godot
+# Docker Godot
 Docker image to build  projects
 
 Godot CI Docker Image
