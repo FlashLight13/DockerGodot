@@ -24,10 +24,7 @@ workflows:
       - publish_image:
           godotVersion: "4.0.2"
           ubuntuVersion: "23.04"
-    triggers:
-        - schedule:
-            cron: "0 0 * * *"
-            filters:
-              branches:
+          filters:
+            branches:
                 only:
                  - release
