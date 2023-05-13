@@ -14,7 +14,7 @@ jobs:
 
       - setup_remote_docker:
           version: 20.10.18
-      - run: echo $DOCKER_PASS | docker login -u flashlight13 --password-stdin
+      - run: echo $DOCKERHUB_PASSWORD | docker login -u flashlight13 --password-stdin
       - run: docker build --tag flashlight13/godot:<< parameters.godotVersion >> --build-arg ubuntuVersion=<< parameters.ubuntuVersion >> --build-arg godotVersion=<< parameters.godotVersion >> -f godot.dockerfile .
       - run: docker push flashlight13/godot:<< parameters.godotVersion >>
 
@@ -24,10 +24,7 @@ workflows:
       - publish_image:
           godotVersion: "4.0.2"
           ubuntuVersion: "23.04"
-    triggers:
-        - schedule:
-            cron: "0 0 * * *"
-            filters:
-              branches:
+          filters:
+            branches:
                 only:
                  - release
