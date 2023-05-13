@@ -1,6 +1,8 @@
 ![image](https://github.com/FlashLight13/DockerGodot/blob/main/logo/landscape.png?raw=true)
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/FlashLight13/DockerGodot/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/FlashLight13/DockerGodot/tree/main)
+![CircleCI](https://img.shields.io/circleci/build/github/FlashLight13/DockerGodot/main)
+![Docker Image Version (latest by date)](https://img.shields.io/docker/v/flashlight13/godot)
+![Docker Image Size (tag)](https://img.shields.io/docker/image-size/flashlight13/godot/4.0.2)
 
 # Docker godot
 Docker image to build  projects
