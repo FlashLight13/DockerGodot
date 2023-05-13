@@ -22,7 +22,7 @@ workflows:
   publish-workflow:
     jobs:
       - publish_image:
-          godotVersion: "4.0.2"
+          godotVersion: "4.0.1"
           ubuntuVersion: "23.04"
           filters:
             branches:
