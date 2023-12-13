@@ -13,6 +13,7 @@ jobs:
     steps:
       - checkout
       - run: python --version
+      - run: pip install requests
       - setup_remote_docker:
           version: 20.10.18
       - when:
