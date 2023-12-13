@@ -68,9 +68,9 @@ def _run_command(command, debug):
 		print(' '.join(command))
 	else:
 		try:
-    		result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = True)
+			result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = True)
 		except subprocess.CalledProcessError as exc:
-    		print("Status : FAIL", exc.returncode, exc.output)
+			print("Status : FAIL", exc.returncode, exc.output)
 		else:
-    		print("Output: \n{}\n".format(output))
+			print("Output: \n{}\n".format(output))
 		
