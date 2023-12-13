@@ -30,22 +30,18 @@ jobs:
 
 workflows:
   scheduled-publish:
+    when:
+        matches: { pattern: "release\\/.*", value: << pipeline.git.branch >> }
     triggers:
     - schedule:
-        # Every day, 0421Z.
+        # Every day, 10am.
         cron: "0 10 * * *"
-        filters:
-          branches:
-              only:
-               - /release\/.*/
     jobs:
       - publish_image:
           is_scheduled: true
   new-release:
-    filters:
-      branches:
-        only:
-         - /release\/.*/
+    when:
+        matches: { pattern: "release\\/.*", value: << pipeline.git.branch >> }
     jobs:
       - publish_image:
           is_scheduled: false
