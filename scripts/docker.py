@@ -5,7 +5,7 @@ import json
 # Page sisze when loading existing versions from the Docker
 PAGE_SIZE = 100
 
-DOCKER_FILE_NAME = "godot.dockerfile"
+DOCKER_FILE = "images/godot.dockerfile"
 
 # https://hub.docker.com/repository/docker/flashlight13/godot 
 DOCKER_NAMESPACE = "flashlight13"
@@ -54,7 +54,7 @@ def upload_docker(release, debug):
 			"--build-arg", "templatesUrl=" + release.templates_url,
 			"--build-arg", "templatesArchiveName=" + release.templates_archive_name,
 
-			"-f", DOCKER_FILE_NAME,
+			"-f", DOCKER_FILE,
 			".",
 		],
 		debug,
@@ -67,4 +67,4 @@ def _run_command(command, debug):
 	if debug:
 		print(' '.join(command))
 	else:
-		result = subprocess.run(command, stderr=subprocess.PIPE, check=True)
+		result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = True)
