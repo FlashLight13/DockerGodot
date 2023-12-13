@@ -1,30 +1,34 @@
 version: 2.1
-
+orbs:
+  python: circleci/python@2.1.1
 jobs:
   publish_image:
     docker:
       - image: cimg/base:stable
     parameters:
-      godotVersion:
-        type: string
-      ubuntuVersion:
-        type: string
+      is_scheduled:
+        description: true when the build is scheduled by the CI
+        type: boolean
+        default: false
     steps:
       - checkout
-
       - setup_remote_docker:
           version: 20.10.18
-      - run: echo $DOCKERHUB_PASSWORD | docker login -u flashlight13 --password-stdin
-      - run: docker build --tag flashlight13/godot:<< parameters.godotVersion >> --build-arg ubuntuVersion=<< parameters.ubuntuVersion >> --build-arg godotVersion=<< parameters.godotVersion >> -f godot.dockerfile .
-      - run: docker push flashlight13/godot:<< parameters.godotVersion >>
+      - when:
+          condition: << parameters.is_scheduled >>
+          steps:
+            - run: python src/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD -i 
+      - when:
+          condition: 
+            not: << parameters.is_scheduled >>
+          steps:
+            - run: python src/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD -d
 
 workflows:
   publish-workflow:
     jobs:
       - publish_image:
-          godotVersion: "4.2"
-          ubuntuVersion: "23.04"
           filters:
             branches:
                 only:
-                 - release
+                 - /release\/.*/
