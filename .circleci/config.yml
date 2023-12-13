@@ -4,7 +4,7 @@ orbs:
 jobs:
   publish_image:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/python:3.12.1
     parameters:
       is_scheduled:
         description: true when the build is scheduled by the CI
@@ -12,6 +12,7 @@ jobs:
         default: false
     steps:
       - checkout
+      - run: python --version
       - setup_remote_docker:
           version: 20.10.18
       - when:
