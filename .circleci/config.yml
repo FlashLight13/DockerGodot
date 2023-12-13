@@ -17,20 +17,35 @@ jobs:
       - setup_remote_docker:
           version: 20.10.18
       - when:
+          # Sheduled builds only incrementally publish new images
           condition: << parameters.is_scheduled >>
           steps:
             - run: python src/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD -i 
       - when:
+          # Pushing to a release branch force all images to be update to the lates version
           condition: 
             not: << parameters.is_scheduled >>
           steps:
             - run: python src/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD
 
 workflows:
-  publish-workflow:
+  scheduled-publish:
+    triggers:
+    - schedule:
+        # Every day, 0421Z.
+        cron: "0 10 * * *"
+        filters:
+          branches:
+              only:
+               - /release\/.*/
     jobs:
       - publish_image:
-          filters:
-            branches:
-                only:
-                 - /release\/.*/
+          is_scheduled: true
+  new-release:
+    filters:
+      branches:
+        only:
+         - /release\/.*/
+    jobs:
+      - publish_image:
+          is_scheduled: false
