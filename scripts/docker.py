@@ -53,6 +53,7 @@ def upload_docker(release, debug):
 
 			"--build-arg", "templatesUrl=" + release.templates_url,
 			"--build-arg", "templatesArchiveName=" + release.templates_archive_name,
+			"--build-arg", "templatesDirectory=" + release.version + "." + release.channel,
 
 			"-f", DOCKER_FILE,
 			".",
@@ -70,7 +71,5 @@ def _run_command(command, debug):
 		try:
 			result = subprocess.run(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE, check = True)
 		except subprocess.CalledProcessError as exc:
-			print("Status : FAIL", exc.returncode, exc.output)
-		else:
-			print("Output: \n{}\n".format(output))
-		
+			print(exc.stderr.decode())
+			raise exc
