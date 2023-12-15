@@ -3,9 +3,10 @@ import docker
 import github
 import arguments
 import create_config_yaml
+from packaging.version import Version
 
-
-GENERATED_CONFIG_PATH = "../.circleci/images.yml"
+FIRST_SUPPORTED_MAJOR_VERSION = 3
+GENERATED_CONFIG_PATH = ".circleci/images.yml"
 # File templates for the Godot engine
 ENGINE_TEMPLATES = [
     {
@@ -39,21 +40,30 @@ def crawl(args) -> None:
         existing_versions = []
         print("Force updating images")
 
-    releases = list(map(build_release_model, github.load_releases(debug)))
+    releases = map(build_release_model, github.load_releases(debug))
+    releases = filter(lambda release: release, releases)
+    releases = list(releases)
     releases_log = map(
         lambda release: release.printable_version(), releases)
     print("Loaded releases: " + ", ".join(releases_log))
 
-    releases = list(filter(
-        lambda release: release.version not in existing_versions, releases))
+    releases = filter(
+        lambda release: release.version not in existing_versions,
+        releases,
+    )
+    releases = list(releases)
 
-    with open(GENERATED_CONFIG_PATH, 'w') as outfile:
+    with open(GENERATED_CONFIG_PATH, 'w+') as outfile:
         create_config_yaml.create(releases, outfile)
 
 
 def build_release_model(release):
     version = release["tag_name"].split('-')[0]
     channel = release["tag_name"].split('-')[1]
+
+    if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
+        print("Skipped " + version + "-" + channel)
+        return None
 
     engine_url = None
     engine_file_name = None
