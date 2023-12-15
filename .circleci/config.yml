@@ -8,14 +8,15 @@ orbs:
 
 jobs:
   setup:
-    executor: continuation/default
+    docker:
+      - image: cimg/python:3.12.1
     steps:
+      - run: echo << pipeline.trigger_source >>
       - checkout
       - run: python --version
-      - run: pip install requests
+      - run: pip install requests pyyaml
       - setup_remote_docker:
           version: 20.10.18
-      - run: echo << pipeline.trigger_source >>
       - when:
           # Sheduled builds only incrementally publish new images
           condition: 
@@ -30,7 +31,7 @@ jobs:
               equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
           steps:
             - run: echo "Generating forced config"
-            - run: python scripts/generated_config.py
+            - run: python scripts/generate_config.py
       - continuation/continue:
           configuration_path: /circleci/images.yml # use newly generated config to continue
 

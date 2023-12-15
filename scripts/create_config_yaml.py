@@ -3,7 +3,7 @@ from model.godot_release_entity import GodotRelease
 
 
 CIRCLE_CI_CONFIG_VERSION = 2.1
-CIRCLE_CI_JOB_IMAGE = "cimg/base:stable"
+CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
 CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 
 # Docker file to build an image with
