@@ -1,37 +1,40 @@
 version: 2.1
+
+setup: true
+
 orbs:
-  python: circleci/python@2.1.1
+  continuation: circleci/continuation@0.1.2
+
 jobs:
-  publish_image:
-    docker:
-      - image: cimg/python:3.12.1
-    parameters:
-      is_scheduled:
-        description: true when the build is scheduled by the CI
-        type: boolean
-        default: false
+  setup:
+    executor: continuation/default
     steps:
       - checkout
       - run: python --version
       - run: pip install requests
       - setup_remote_docker:
           version: 20.10.18
+      - run: echo << pipeline.trigger_source >>
       - when:
           # Sheduled builds only incrementally publish new images
-          condition: << parameters.is_scheduled >>
-          steps:
-            - run: python scripts/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD -i 
-      - when:
-          # Pushing to a release branch force all images to be update to the lates version
           condition: 
-            not: << parameters.is_scheduled >>
+            equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
           steps:
-            - run: python scripts/autoload.py --docker_login $DOCKERHUB_LOGIN --docker_pass $DOCKERHUB_PASSWORD
+           - run: echo "Generating scheduled config"
+           - run: python scripts/generated_config.py -i 
+      - when:
+            # Pushing to a release branch force all images to be update to the lates version
+          condition: 
+            not:
+              equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+          steps:
+            - run: echo "Generating forced config"
+            - run: python scripts/generated_config.py
+      - continuation/continue:
+          configuration_path: /circleci/images.yml # use newly generated config to continue
 
 workflows:
-  scheduled-publish:
-    when:
-        matches: { pattern: "release\\/.*", value: << pipeline.git.branch >> }
+  setup_publish:
     triggers:
     - schedule:
         # Every day, 10am.
@@ -41,11 +44,4 @@ workflows:
               only:
                - release\/.*
     jobs:
-      - publish_image:
-          is_scheduled: true
-  new-release:
-    when:
-        matches: { pattern: "release\\/.*", value: << pipeline.git.branch >> }
-    jobs:
-      - publish_image:
-          is_scheduled: false
+      - setup
