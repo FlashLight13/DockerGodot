@@ -12,8 +12,8 @@ DOCKER_FILE = "images/godot.dockerfile"
 DOCKER_NAMESPACE = "flashlight13"
 DOCKER_REPOSITORY = "godot"
 # Setup in CI
-DOCKER_LOGIN_ENV_CONST = "DOCKER_LOGIN"
-DOCKER_PASS_ENV_CONST = "DOCKER_PASSWORD"
+DOCKER_LOGIN_ENV_CONST = "$DOCKERHUB_LOGIN"
+DOCKER_PASS_ENV_CONST = "$DOCKERHUB_PASSWORD"
 # Version of Ubuntu to use for the image
 UBUNTU_VERSION = "23.04"
 
@@ -87,7 +87,7 @@ def steps_for_release(release):
 
         # Login to the Docker
         {
-            "run": "echo " + DOCKER_PASS_ENV_CONST + " | docker login - u "
+            "run": "echo " + DOCKER_PASS_ENV_CONST + " | docker login -u "
             + DOCKER_LOGIN_ENV_CONST + " --password-stdin",
         },
 
