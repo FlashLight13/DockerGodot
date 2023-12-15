@@ -6,7 +6,9 @@
 # Docker Godot
 Docker image to use in the CI to build Godot projects
 
-This Docker image contains everything you need to run [Godot Engine](https://godotengine.org/) inside a DOcker container. It includes both engine and export templates ready for exporting
+This Docker image contains everything you need to run [Godot Engine](https://godotengine.org/) inside a Docker container. It includes both engine and export templates ready for exporting
+
+Instead of having a docker file for every image, this repo focuses on automatic support of every published godot version. It contains a CircleCI pipeline that crawls all existing versions and incrementally uploads images to the DockerHub. Each image uses the same Docker file located in images/godot.dockerfile.
 
 # Supported versions
 Provides all the versions starting with the Godot 3. A list of available images is available here:
