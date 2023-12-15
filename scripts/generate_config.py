@@ -20,6 +20,10 @@ ENGINE_TEMPLATES = [
         "archive_name": "Godot_v%s-%s_linux.64.zip",
         "file_name": "Godot_v%s-%s_linux.64",
     },
+    {
+        "archive_name": "Godot_v%s_%s_x11.64.zip",
+        "file_name": "Godot_v%s-%s_x11.64",
+    },
 ]
 # File template for Godot export templates
 EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
