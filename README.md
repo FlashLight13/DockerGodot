@@ -2,15 +2,14 @@
 
 ![CircleCI](https://img.shields.io/circleci/build/github/FlashLight13/DockerGodot/main)
 ![Docker Image Version (latest by date)](https://img.shields.io/docker/v/flashlight13/godot)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/flashlight13/godot/4.0.2)
 
 # Docker Godot
-Docker image to build  projects
+Docker image to use in the CI to build Godot projects
 
-This Docker image contains everything you need to run [Godot Engine](https://godotengine.org/) inside a container. It includes Godot and it's corresponding export templates.
-It may come in handy when setting up a CI or Godot server.
+This Docker image contains everything you need to run [Godot Engine](https://godotengine.org/) inside a DOcker container. It includes both engine and export templates ready for exporting
 
 # Supported versions
+Provides all the versions starting with the Godot 3. A list of available images is available here:
 https://hub.docker.com/r/flashlight13/godot/tags
 
 # Getting Started
@@ -20,7 +19,7 @@ There're two primary usecases for this image:
 
 In any case, the first thing you have to do is to have [Docker](https://www.docker.com/) up and running.
 
-### Starting point of your image
+### Using it in your CI image
 0) Make sure you're running it as a `root` user.
 1) In your container:
 ```
