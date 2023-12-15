@@ -35,13 +35,7 @@ jobs:
 
 workflows:
   setup_publish:
-    triggers:
-    - schedule:
-        # Every day, 10am.
-        cron: "0 10 * * *"
-        filters:
-          branches:
-              only:
-               - release\/.*
+    when:
+        matches: { pattern: "release\\/.*", value: << pipeline.git.branch >> }
     jobs:
       - setup
