@@ -81,7 +81,8 @@ def steps_for_release(release):
         "checkout",
         {
             "setup_remote_docker": {
-                "version": CIRCLE_CI_REMOTE_DOCKER_VERSION
+                "version": CIRCLE_CI_REMOTE_DOCKER_VERSION,
+                "docker_layer_caching": True,
             }
         },
 
