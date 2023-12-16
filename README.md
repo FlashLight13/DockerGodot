@@ -1,7 +1,6 @@
 <img src="https://github.com/FlashLight13/DockerGodot/blob/main/logo/icon.png" width="20%"/>
 
 ![CircleCI](https://img.shields.io/circleci/build/github/FlashLight13/DockerGodot/release)
-![Docker Image Version (latest by date)](https://img.shields.io/docker/v/flashlight13/godot)
 
 # Docker Godot
 Docker image to use in the CI to build Godot projects
