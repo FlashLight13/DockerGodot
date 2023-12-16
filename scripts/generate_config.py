@@ -6,6 +6,7 @@ import create_config_yaml
 from packaging.version import Version
 
 FIRST_SUPPORTED_MAJOR_VERSION = 3
+SUPPORTED_CHANNELS = ["stable"]
 GENERATED_CONFIG_PATH = ".circleci/images.yml"
 # File templates for the Godot engine
 ENGINE_TEMPLATES = [
@@ -62,7 +63,8 @@ def build_release_model(release):
     channel = release["tag_name"].split('-')[1]
 
     if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
-        print("Skipped " + version + "-" + channel)
+        return None
+    if not channel in SUPPORTED_CHANNELS:
         return None
 
     engine_url = None
