@@ -23,7 +23,7 @@ jobs:
             equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
           steps:
            - run: echo "Generating scheduled config"
-           - run: python scripts/generated_config.py -i 
+           - run: python scripts/generate_config.py -i 
       - when:
             # Pushing to a release branch force all images to be update to the lates version
           condition: 
