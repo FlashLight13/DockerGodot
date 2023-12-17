@@ -49,7 +49,7 @@ def crawl(args) -> None:
     print("Loaded releases: " + ", ".join(releases_log))
 
     releases = filter(
-        lambda release: release.version not in existing_versions,
+        lambda release: release.printable_version() not in existing_versions,
         releases,
     )
     releases = list(releases)
@@ -64,7 +64,7 @@ def build_release_model(release):
 
     if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
         return None
-    if not channel in SUPPORTED_CHANNELS:
+    if channel not in SUPPORTED_CHANNELS:
         return None
 
     engine_url = None
