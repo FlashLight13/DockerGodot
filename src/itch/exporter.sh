@@ -32,6 +32,10 @@ while (( "$#" )); do
       Help
       exit
       ;;
+    -v)
+      echo "Always the best! :)"
+      exit
+      ;;
     --projectPath)
       if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
         PROJECT_PATH=$2
