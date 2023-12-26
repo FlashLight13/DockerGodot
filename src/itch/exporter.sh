@@ -99,8 +99,8 @@ while (( "$#" )); do
         exit 1
       fi
       ;;
-    *) # preserve positional arguments
-      PARAMS="$PARAMS $1"
+    *)
+      BUTLER_PARAMS="$BUTLER_PARAMS $1"
       shift
       ;;
   esac
@@ -129,7 +129,7 @@ cd $PROJECT_PATH
 mkdir -p $OUTPUT_PATH
 godot --headless --export-release "$BUILD_PRESET" "$OUTPUT_PATH/index.html"
 echo "BUILD FINISHED"
-if [ $DOUBLE_IMPORT ] ; then
+if [ "$DOUBLE_IMPORT" = true ] ; then
     echo "STARTING SECOND WORKAROUND EXPORT"
     godot --headless --export-release "$BUILD_PRESET" "$OUTPUT_PATH/index.html"
 fi
@@ -140,4 +140,4 @@ mkdir -p $ARTIFACT_PATH
 zip -rj $ARTIFACT_PATH/$ARTIFACT_FILE_NAME.zip $OUTPUT_PATH/
 
 # Upload
-butler push $ARTIFACT_PATH/$ARTIFACT_FILE_NAME.zip $BUTLER_PUSH_DESTINATION "$@"
+butler push $ARTIFACT_PATH/$ARTIFACT_FILE_NAME.zip $BUTLER_PUSH_DESTINATION $BUTLER_PARAMS
