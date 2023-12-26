@@ -34,7 +34,7 @@ EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 def crawl(args) -> None:
     debug = args.is_debug or args.debug
     snapshot = is_snapshot(args)
-    incremental = args.is_incremental in ["True", "true", "1"]
+    incremental = not snapshot and args.is_incremental in ["True", "true", "1"]
     print("is_debug=" + str(debug))
     print("is_snapshot=" + str(snapshot))
     print("is_incremental=" + str(incremental))
