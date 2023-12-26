@@ -7,7 +7,7 @@ CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
 CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 
 # Docker file to build an image with
-DOCKER_FILE = "images/godot.dockerfile"
+DOCKER_FILE = "src/base/godot.dockerfile"
 SNAPSHOT_TAG = "snapshot"
 # https://hub.docker.com/repository/docker/flashlight13/godot
 DOCKER_NAMESPACE = "flashlight13"
