@@ -34,10 +34,11 @@ EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 def crawl(args) -> None:
     debug = args.is_debug or args.debug
     snapshot = is_snapshot(args)
+    incremental = args.is_incremental in ["True", "true", "1"]
     print("is_debug=" + str(debug))
     print("is_snapshot=" + str(snapshot))
-    print("is_incremental=" + str(args.is_incremental))
-    if args.is_incremental:
+    print("is_incremental=" + str(incremental))
+    if incremental:
         existing_versions = docker.load_existing_versions(debug)
         print("Existing releases: " + ', '.join(existing_versions))
     else:
@@ -57,7 +58,7 @@ def crawl(args) -> None:
     )
 
     if snapshot:
-        releases = [max(releases, key = lambda r: Version(r.version))]
+        releases = [max(releases, key=lambda r: Version(r.version))]
 
     releases = list(releases)
 
