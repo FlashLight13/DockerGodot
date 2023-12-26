@@ -1,20 +1,27 @@
-![image](https://github.com/FlashLight13/DockerGodot/blob/main/logo/landscape.png?raw=true)
+<img src="https://github.com/FlashLight13/DockerGodot/blob/main/logo/icon.png" width="20%"/>
 
-![CircleCI](https://img.shields.io/circleci/build/github/FlashLight13/DockerGodot/main)
-![Docker Image Version (latest by date)](https://img.shields.io/docker/v/flashlight13/godot)
-![Docker Image Size (tag)](https://img.shields.io/docker/image-size/flashlight13/godot/4.0.2)
+![CircleCI](https://img.shields.io/circleci/build/github/FlashLight13/DockerGodot/release)
+![Docker Image Size with architecture (latest by date/latest semver)](https://img.shields.io/docker/image-size/flashlight13/godot)
 
-# Docker godot
-Docker image to build  projects
+# Docker Godot
+Docker image to use in the CI to build Godot projects
 
-Godot CI Docker Image
-This Docker image contains everything you need to build and export [Godot Engine](https://godotengine.org/) games on with ubuntu base image. It includes Godot and it's corresponding export templates.
+This Docker image contains everything you need to run [Godot Engine](https://godotengine.org/) inside a Docker container. It includes both engine and export templates ready for exporting
 
-### Supported versions
+Instead of having a docker file for every image, this repo focuses on automatic support of every published godot version. It contains a CircleCI pipeline that crawls all existing versions and incrementally uploads images to the DockerHub. Each image uses the same Docker file located in images/godot.dockerfile.
+
+# Supported versions
+Provides stable releases starting with the Godot 3. A list of available images is available here:
 https://hub.docker.com/r/flashlight13/godot/tags
 
 # Getting Started
+There're two primary usecases for this image:
+1) Use it as a part of game CI pipeline
+2) Run it directly to start godot
 
+In any case, the first thing you have to do is to have [Docker](https://www.docker.com/) up and running.
+
+### Using it in your CI image
 0) Make sure you're running it as a `root` user.
 1) In your container:
 ```
@@ -22,5 +29,10 @@ FROM flashlight13/godot:<version> AS base
 
 ...
 
-RUN  godot --headless --export-release ...
+RUN  godot ...
+```
+### Executable docker image
+```
+docker pull flashlight13/godot:<version>
+docker run flashlight13/godot:<version>
 ```
