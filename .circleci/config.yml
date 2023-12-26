@@ -23,7 +23,7 @@ jobs:
             equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
           steps:
            - run: echo "Generating scheduled config"
-           - run: python base/scripts/generate_config.py -i --trigger_branch=<< pipeline.branch >>
+           - run: python base/scripts/generate_config.py -i --trigger_branch=<< pipeline.git.branch >>
       - when:
             # Pushing to a release branch force all images to be update to the lates version
           condition: 
@@ -31,7 +31,7 @@ jobs:
               equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
           steps:
             - run: echo "Generating forced config"
-            - run: python base/scripts/generate_config.py --trigger_branch=<< pipeline.branch >>
+            - run: python base/scripts/generate_config.py --trigger_branch=<< pipeline.git.branch >>
       - continuation/continue:
           configuration_path: .circleci/images.yml # use newly generated config to continue
 
