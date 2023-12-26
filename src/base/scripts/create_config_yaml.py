@@ -8,7 +8,7 @@ CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 
 # Docker file to build an image with
 DOCKER_FILE = "images/godot.dockerfile"
-SNAPSHOT_TAG = "SNAPSHOT"
+SNAPSHOT_TAG = "snapshot"
 # https://hub.docker.com/repository/docker/flashlight13/godot
 DOCKER_NAMESPACE = "flashlight13"
 DOCKER_REPOSITORY = "godot"
@@ -24,7 +24,7 @@ def create(releases, output_file, is_snapshot):
         for release in releases:
             releases_log.append(release.printable_version())
             job_name = "publish-" + \
-                release.printable_version().replace('.', "_")
+                release.version.replace('.', "_")
             json_config["jobs"][job_name] = job_template(
                 steps_for_release(release, is_snapshot))
             json_config["workflows"]["publish"]["jobs"].append(job_name)
