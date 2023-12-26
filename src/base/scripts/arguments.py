@@ -7,8 +7,11 @@ def setup_parser():
         description='Automatically crawles existing Godot versions of the engine and creates corresponding Docker images',
         epilog='by Anton Potapov @flashlight13')
 
-    parser.add_argument('-i', '--is_incremental', action="store_true",
+    parser.add_argument('-i', '--incremental', action="store_true",
                         help="True to reupload existing docker images")
+    parser.add_argument(
+        '--is_incremental', help="True to reupload existing docker images")
+
     parser.add_argument('-d', '--debug', action="store_true",
                         help="Enables debug mode (reduced page size and disabled images uploading)")
     parser.add_argument(
