@@ -74,8 +74,7 @@ def job_template(steps):
 
 
 def steps_for_release(release):
-    docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + \
-        ":" + release.version + "-" + release.channel
+    docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + release.version
     return [
         # checkout code
         "checkout",
