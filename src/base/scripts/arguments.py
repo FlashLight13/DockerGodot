@@ -15,8 +15,6 @@ def setup_parser():
         '--is_debug', help="Enables debug mode (reduced page size and disabled images uploading)")
 
     parser.add_argument(
-        '--docker_login', help="Docker login to use when uploading the images")
-    parser.add_argument(
-        '--docker_pass', help="Docker pass to use when uploading the images")
+        '--trigger_branch', help="Docker pass to use when uploading the images")
 
     return parser

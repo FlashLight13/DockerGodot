@@ -8,17 +8,16 @@ CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 
 # Docker file to build an image with
 DOCKER_FILE = "images/godot.dockerfile"
+SNAPSHOT_TAG = "SNAPSHOT"
 # https://hub.docker.com/repository/docker/flashlight13/godot
 DOCKER_NAMESPACE = "flashlight13"
 DOCKER_REPOSITORY = "godot"
 # Setup in CI
 DOCKER_LOGIN_ENV_CONST = "$DOCKERHUB_LOGIN"
 DOCKER_PASS_ENV_CONST = "$DOCKERHUB_PASSWORD"
-# Version of Ubuntu to use for the image
-UBUNTU_VERSION = "23.04"
 
 
-def create(releases, output_file):
+def create(releases, output_file, is_snapshot):
     json_config = config_template()
     if releases:
         releases_log = []
@@ -27,7 +26,7 @@ def create(releases, output_file):
             job_name = "publish-" + \
                 release.printable_version().replace('.', "_")
             json_config["jobs"][job_name] = job_template(
-                steps_for_release(release))
+                steps_for_release(release, is_snapshot))
             json_config["workflows"]["publish"]["jobs"].append(job_name)
         print("Included in the config: " + ", ".join(releases_log))
     else:
@@ -73,8 +72,11 @@ def job_template(steps):
     }
 
 
-def steps_for_release(release):
-    docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + release.version
+def steps_for_release(release, is_snapshot):
+    if is_snapshot:
+        docker_tag = SNAPSHOT_TAG
+    else:
+        docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + release.version
     return [
         # checkout code
         "checkout",
@@ -95,7 +97,6 @@ def steps_for_release(release):
         {
             "run": "docker build" + " "
             + "--tag " + docker_tag + " "
-            + "--build-arg ubuntuVersion=" + UBUNTU_VERSION + " "
             + "--build-arg godotVersion=" + release.version + " "
 
             + "--build-arg engineUrl=" + release.engine_url + " "
