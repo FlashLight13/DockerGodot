@@ -2,16 +2,7 @@
 	"folders":
 	[
 		{
-			"path": ".circleci",
-		},
-		{
-			"path": ".git",
-		},
-		{
-			"path": "logo",
-		},
-		{
-			"path": "src",
+			"path": ".",
 		},
 	],
 	"build_systems":
