@@ -74,7 +74,7 @@ def job_template(steps):
 
 def steps_for_release(release, is_snapshot):
     if is_snapshot:
-        docker_tag = DOCKER_NAMESPACE + "/" + SNAPSHOT_TAG
+        docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + SNAPSHOT_TAG
     else:
         docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + release.version
     return [
