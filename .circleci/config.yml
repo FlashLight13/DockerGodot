@@ -1,30 +1,43 @@
 version: 2.1
 
-jobs:
-  publish_image:
-    docker:
-      - image: cimg/base:stable
-    parameters:
-      godotVersion:
-        type: string
-      ubuntuVersion:
-        type: string
-    steps:
-      - checkout
+setup: true
 
+orbs:
+  continuation: circleci/continuation@0.1.2
+  python: circleci/python@2.1.1
+
+jobs:
+  setup:
+    docker:
+      - image: cimg/python:3.12.1
+    steps:
+      - run: echo << pipeline.trigger_source >>
+      - checkout
+      - run: python --version
+      - run: pip install requests pyyaml packaging
       - setup_remote_docker:
           version: 20.10.18
-      - run: echo $DOCKERHUB_PASSWORD | docker login -u flashlight13 --password-stdin
-      - run: docker build --tag flashlight13/godot:<< parameters.godotVersion >> --build-arg ubuntuVersion=<< parameters.ubuntuVersion >> --build-arg godotVersion=<< parameters.godotVersion >> -f godot.dockerfile .
-      - run: docker push flashlight13/godot:<< parameters.godotVersion >>
+      - when:
+          # Sheduled builds only incrementally publish new images
+          condition: 
+            equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+          steps:
+           - run: echo "Generating scheduled config"
+           - run: python base/scripts/generate_config.py -i 
+      - when:
+            # Pushing to a release branch force all images to be update to the lates version
+          condition: 
+            not:
+              equal: ["scheduled_pipeline", << pipeline.trigger_source >>]
+          steps:
+            - run: echo "Generating forced config"
+            - run: python base/scripts/generate_config.py
+      - continuation/continue:
+          configuration_path: .circleci/images.yml # use newly generated config to continue
 
 workflows:
-  publish-workflow:
+  setup_publish:
+    when:
+        matches: { pattern: "release", value: << pipeline.git.branch >> }
     jobs:
-      - publish_image:
-          godotVersion: "4.2"
-          ubuntuVersion: "23.04"
-          filters:
-            branches:
-                only:
-                 - release
+      - setup
