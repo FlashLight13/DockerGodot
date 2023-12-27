@@ -1,4 +1,4 @@
-FROM debian:12.4 AS base
+FROM debian:12.4-slim AS base
 
 ARG engineUrl
 ARG engineArchiveName
@@ -11,8 +11,7 @@ ARG templatesDirectory
 # Setup apt-get and install basics
 RUN apt-get update && apt-get install -y \
     wget \
-    unzip \
-    libfontconfig
+    unzip
 
 # Install Godot
 RUN wget $engineUrl \
@@ -30,4 +29,4 @@ RUN wget $templatesUrl \
     && mv templates ${GODOT_TEMPLATES_DIR} \
     && mv ${GODOT_TEMPLATES_DIR}/templates ${GODOT_TEMPLATES_DIR}/$templatesDirectory
 
-CMD godot
+ENTRYPOINT ["godot"]

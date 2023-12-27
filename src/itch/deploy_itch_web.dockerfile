@@ -20,4 +20,4 @@ RUN mkdir -p /opt/exporter/
 COPY exporter.sh /opt/exporter/exporter.sh
 RUN alias exporter="bash /opt/exporter/exporter.sh" && exporter -v
 
-CMD $EXPORT_SCRIPT
+ENTRYPOINT ["$EXPORT_SCRIPT"]
