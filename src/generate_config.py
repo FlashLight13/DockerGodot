@@ -1,6 +1,5 @@
 from model.godot_release_entity import GodotRelease
 from model.docker_credentials import DockerCredentials
-from model.docker_tag import DockerTag
 import argparse
 import create_config_yaml
 import importlib
@@ -40,33 +39,32 @@ DOCKER_CREDENTIALS = DockerCredentials(
 
 def crawl(args) -> None:
     is_debug = args.is_debug or args.debug
-    incremental = args.is_incremental in ["True", "true", "1"]
+    incremental = args.incremental
     print("is_debug=" + str(is_debug))
     print("is_incremental=" + str(incremental))
-    if incremental:
-        existing_versions = __load_existing_versions(is_debug, DockerTag("", ""))
-        print("Existing releases: " + ", ".join(existing_versions))
-    else:
-        existing_versions = []
-        print("Force updating images")
 
     releases = map(__build_release_model, __load_releases(is_debug))
     releases = filter(lambda release: release, releases)
-    releases = list(releases)
-    releases_log = map(lambda release: release.version, releases)
-    print("Loaded releases: " + ", ".join(releases_log))
-
-    releases = filter(
-        lambda release: release.version not in existing_versions, releases
-    )
-
-    releases = list(releases)
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
+        print("==== Processing" + generation_module_path)
         generation_module = importlib.import_module(generation_module_path)
+        if incremental:
+            existing_versions = __load_existing_versions(
+                is_debug, generation_module.get_docker_tag()
+            )
+            print("Existing releases: " + ", ".join(existing_versions))
+        else:
+            existing_versions = []
+            print("Force updating images")
+        releases = filter(
+            lambda release: release.version not in existing_versions, releases
+        )
         for release in releases:
-            generation_results.append(generation_module.generate(release, DOCKER_CREDENTIALS))
+            generation_results.append(
+                generation_module.generate(release, DOCKER_CREDENTIALS)
+            )
 
     with open(GENERATED_CONFIG_PATH, "w+") as outfile:
         create_config_yaml.create(generation_results, outfile)
@@ -124,7 +122,7 @@ def __load_releases(debug):
         page_size = 100
     releases = []
     page = 1
-    while not debug or page == 1:
+    while True:
         page_url = (
             "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
             + str(page_size)
@@ -133,6 +131,10 @@ def __load_releases(debug):
         headers = {}
         response = requests.get(page_url % page, headers=headers)
         release = json.loads(response.content)
+        if debug:
+            print("Loaded releases:" + str(release))
+        if response.status_code != 200:
+            raise Exception("Failed to load releases " + str(response) + " " + str(response.content))
         if len(release) == 0:
             break
         releases += release
@@ -185,9 +187,6 @@ def __setup_parser():
         action="store_true",
         help="True to reupload existing docker images",
     )
-    parser.add_argument(
-        "--is_incremental", help="True to reupload existing docker images"
-    )
 
     parser.add_argument(
         "-d",
@@ -202,6 +201,7 @@ def __setup_parser():
 
     parser.add_argument(
         "--generation_scripts",
+        nargs="+",
         help="Which script to load to generate the config. generate(existing_tags, is_debug) will be called on that script to proceed",
     )
 

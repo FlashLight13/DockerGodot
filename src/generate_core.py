@@ -1,4 +1,5 @@
 from model.generation_result import GenerationResult
+from model.docker_tag import DockerTag
 
 CIRCLE_CI_CONFIG_VERSION = 2.1
 CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
@@ -7,8 +8,6 @@ CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 # Docker file to build an image with
 DOCKER_FILE = "src/godot.dockerfile"
 # https://hub.docker.com/repository/docker/flashlight13/godot
-DOCKER_NAMESPACE = "flashlight13"
-DOCKER_REPOSITORY = "godot"
 
 
 def generate(release, credentials):
@@ -23,6 +22,10 @@ def get_job_name(release):
     return "publish-core-" + release.version
 
 
+def get_docker_tag():
+    return DockerTag(namespace="flashlight13", repository="godot")
+
+
 def __job_template(steps):
     return {
         "docker": [
@@ -33,7 +36,7 @@ def __job_template(steps):
 
 
 def __steps_for_release(release, credentials):
-    docker_tag = DOCKER_NAMESPACE + "/" + DOCKER_REPOSITORY + ":" + release.version
+    docker_tag = get_docker_tag().namespace + "/" + get_docker_tag().repository + ":" + release.version
     return [
         # checkout code
         "checkout",

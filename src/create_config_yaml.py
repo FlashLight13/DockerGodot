@@ -1,6 +1,4 @@
 import yaml
-from model.godot_release_entity import GodotRelease
-
 
 CIRCLE_CI_CONFIG_VERSION = 2.1
 CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
@@ -21,36 +19,30 @@ def create(generation_results, output_file):
     if generation_results:
         for generation_result in generation_results:
             json_config["jobs"][generation_result.job_name] = generation_result.job
-            json_config["workflows"]["publish"]["jobs"].append(job_name)
+            json_config["workflows"]["publish"]["jobs"].append(generation_result.job_name)
             if generation_result.dependencies:
                 for dependency in generation_result.dependencies:
-                    json_config["workflows"]["publish"]["jobs"][job_name]["requires"].append(dependency)
+                    json_config["workflows"]["publish"]["jobs"][generation_result.job_name][
+                        "requires"
+                    ].append(dependency)
     else:
         job_name = "empty_job"
         json_config["jobs"][job_name] = __job_template(
             [
-                {
-                    "run": "echo nothing to do here"
-                },
+                {"run": "echo nothing to do here"},
             ]
         )
         json_config["workflows"]["publish"]["jobs"].append(job_name)
         print("Nothing to include. An empty config created")
     yaml.safe_dump(
-        json_config,
-        output_file,
-        indent=2,
-        default_style=None,
-        default_flow_style=False
+        json_config, output_file, indent=2, default_style=None, default_flow_style=False
     )
 
 
 def __config_template():
     return {
         "version": CIRCLE_CI_CONFIG_VERSION,
-        "jobs": {
-
-        },
+        "jobs": {},
         "workflows": {
             "publish": {
                 "jobs": [],
