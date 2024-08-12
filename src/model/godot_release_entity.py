@@ -21,6 +21,3 @@ class GodotRelease:
 
         self.templates_url = templates_url
         self.templates_archive_name = templates_archive_name
-
-    def printable_version(self):
-        return self.version + "-" + self.channel
