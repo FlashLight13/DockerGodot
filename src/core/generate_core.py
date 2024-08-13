@@ -2,14 +2,10 @@ from model.generation_result import GenerationResult
 from model.docker_coordinates import DockerCoordinates
 import circle_ci_config
 
-# Latest from https://github.com/itchio/butler/releases
-BUTLER_VERSION = "v15.21.0"
-
 # Docker file to build an image with
-DOCKER_FILE = "src/itch/itch.dockerfile"
-DOCKER_COORDINATES = DockerCoordinates(
-    namespace="flashlight13", repository="godot-itch"
-)
+DOCKER_FILE = "src/godot.dockerfile"
+# https://hub.docker.com/repository/docker/flashlight13/godot
+DOCKER_COORDINATES = DockerCoordinates(namespace="flashlight13", repository="godot")
 
 
 def generate(release):
@@ -32,7 +28,7 @@ def __steps_for_release(release):
         {
             "setup_remote_docker": {
                 "version": circle_ci_config.REMOTE_DOCKER_VERSION,
-                "docker_layer_caching": True,
+                "docker_layer_caching": circle_ci_config.DOCKER_LAYER_CACHING,
             }
         },
         # Login to the Docker
@@ -52,7 +48,22 @@ def __steps_for_release(release):
             + " "
             + ("--build-arg godotVersion=" + release.version)
             + " "
-            + ("--build-arg butlerVersion=" + BUTLER_VERSION)
+            + ("--build-arg engineUrl=" + release.engine_url)
+            + " "
+            + ("--build-arg engineArchiveName=" + release.engine_archive_name)
+            + " "
+            + ("--build-arg engineFileName=" + release.engine_file_name)
+            + " "
+            + ("--build-arg templatesUrl=" + release.templates_url)
+            + " "
+            + ("--build-arg templatesArchiveName=" + release.templates_archive_name)
+            + " "
+            + (
+                "--build-arg templatesDirectory="
+                + release.version
+                + "."
+                + release.channel
+            )
             + " "
             + ("-f " + DOCKER_FILE)
             + " "

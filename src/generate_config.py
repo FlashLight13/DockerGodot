@@ -1,207 +1,126 @@
-from model.godot_release_entity import GodotRelease
+from model.generation_result import GenerationResult
 import argparse
 import create_config_yaml
-import importlib
-from packaging.version import Version
-import requests
-import json
-import subprocess
+import api.docker as docker
+import api.github as github
+import core.generate_core as generate_core
+import itch.generate_itch as generate_itch
+import graphlib
 
-FIRST_SUPPORTED_MAJOR_VERSION = 3
-SUPPORTED_CHANNELS = ["stable"]
+
+class JobsGenerator:
+
+    def __init__(
+        self,
+        key,
+        module,
+        coordinates,
+        dependencies,
+    ):
+        self.key = key
+        self.module = module
+        self.coordinates = coordinates
+        self.dependencies = dependencies
+
+
 GENERATED_CONFIG_PATH = ".circleci/images.yml"
-# File templates for the Godot engine
-ENGINE_TEMPLATES = [
-    {
-        "archive_name": "Godot_v%s-%s_x11.64.zip",
-        "file_name": "Godot_v%s-%s_x11.64",
-    },
-    {
-        "archive_name": "Godot_v%s-%s_linux.x86_64.zip",
-        "file_name": "Godot_v%s-%s_linux.x86_64",
-    },
-    {
-        "archive_name": "Godot_v%s-%s_linux.64.zip",
-        "file_name": "Godot_v%s-%s_linux.64",
-    },
-    {
-        "archive_name": "Godot_v%s_%s_x11.64.zip",
-        "file_name": "Godot_v%s-%s_x11.64",
-    },
+GENERATORS = [
+    JobsGenerator(
+        key="itch",
+        module=generate_itch,
+        dependencies=["core"],
+        coordinates=generate_itch.DOCKER_COORDINATES,
+    ),
+    JobsGenerator(
+        key="core",
+        module=generate_core,
+        dependencies=[],
+        coordinates=generate_core.DOCKER_COORDINATES,
+    ),
 ]
-# File template for Godot export templates
-EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 
 
 def crawl(args) -> None:
     is_debug = args.is_debug or args.debug
-    incremental = args.incremental
+    incremental = args.is_incremental in ["True", "true", 1]
+    use_gh = args.use_gh
     print("===========    ARGS    ===========")
     print("is_debug=" + str(is_debug))
     print("is_incremental=" + str(incremental))
+    print("use_gh=" + str(use_gh))
     print("==================================")
 
-    releases = map(
-        lambda release: __build_release_model(release, is_debug),
-        __load_releases(args.use_gh, is_debug),
+    generators = list(__topological_generators())
+    releases = list(github.load_releases(use_gh=use_gh, debug=is_debug))
+    existing_tags = docker.load_existing_versions(
+        coorinates_list=map(lambda generator: generator.coordinates, GENERATORS),
+        debug=is_debug,
     )
-    releases = filter(lambda release: release, releases)
-    releases = list(releases)
+    print("Generators:")
+    print("  " + str([*map(lambda generator: generator.key, generators)]))
+    print("Releases to process:")
+    print("  " + str([*map(lambda release: release.version, releases)]))
+    print("Existing tags:")
+    for coordinate in existing_tags.keys():
+        print("  " + str(coordinate) + ": " + str(existing_tags[coordinate]))
+    print("==================================")
 
     generation_results = []
-    for generation_module_path in args.generation_scripts:
-        print("==== Start " + generation_module_path)
-        generation_module = importlib.import_module(generation_module_path)
-        if incremental:
-            existing_versions = __load_existing_versions(
-                is_debug, generation_module.get_docker_tag()
+    for release in releases:
+        print("Processing release=" + str(release.version))
+        generation_results_for_release = {}
+        for jobs_generator in generators:
+            if (
+                incremental
+                and jobs_generator.module.docker_tag(release)
+                in existing_tags[jobs_generator.coordinates]
+            ):
+                print(
+                    "  Skipping "
+                    + str(release.version)
+                    + " for "
+                    + str(jobs_generator.key)
+                )
+                continue
+            dependencies_to_add = filter(
+                lambda dependency_key: dependency_key in generation_results_for_release,
+                jobs_generator.dependencies,
             )
-            print("Existing releases:\n" + ", ".join(existing_versions))
-        else:
-            existing_versions = []
-            print("Force updating images")
-        module_releases = filter(
-            lambda release: release.version not in existing_versions, releases
+            dependencies_to_add = map(
+                lambda dependency_key: generation_results_for_release[dependency_key].job_name,
+                dependencies_to_add,
+            )
+            generation_result = GenerationResult(
+                job_name=__job_name(jobs_generator, release),
+                job=jobs_generator.module.generate(release),
+                dependencies=list(dependencies_to_add),
+            )
+            print(
+                "  Adding " + str(generation_result) + " for " + str(jobs_generator.key)
+            )
+            generation_results_for_release[jobs_generator.key] = generation_result
+        generation_results = generation_results + list(
+            generation_results_for_release.values()
         )
-        for release in module_releases:
-            generation_result = generation_module.generate(release)
-            if is_debug:
-                print("For release " + str(release.version) + " adding job: " + str(generation_result.job_name))
-            generation_results.append(generation_result)
-        print("==== Finish " + generation_module_path)
 
     with open(GENERATED_CONFIG_PATH, "w+") as outfile:
         create_config_yaml.create(generation_results, outfile)
 
 
-def __build_release_model(release, is_debug):
-    version = release["tag_name"].split("-")[0]
-    channel = release["tag_name"].split("-")[1]
+def __job_name(generator, release):
+    return "publish-" + generator.key + "-" + release.version.replace(".", "_")
 
-    if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
-        if is_debug:
-            print("Skipping unsupported version: " + str(version))
-        return None
-    if channel not in SUPPORTED_CHANNELS:
-        if is_debug:
-            print("Skipping unsupported channel: " + str(channel))
-        return None
 
-    if is_debug:
-        print("Proceeding for version " + str(version))
-
-    engine_url = None
-    engine_file_name = None
-    engine_archive_name = None
-
-    templates_url = None
-    templates_archive_name = None
-
-    for asset in release["assets"]:
-        if engine_url is None:
-            for engine_template in ENGINE_TEMPLATES:
-                file_name = engine_template["archive_name"] % (version, channel)
-                if asset["name"] == file_name:
-                    engine_url = asset["browser_download_url"]
-                    engine_archive_name = file_name
-                    engine_file_name = engine_template["file_name"] % (version, channel)
-        if templates_url is None:
-            file_name = EXPORT_TEMPLATES_TEMPLATE % (version, channel)
-            if asset["name"] == file_name:
-                templates_url = asset["browser_download_url"]
-                templates_archive_name = file_name
-    if engine_url is None:
-        raise Exception(release["tag_name"] + " has no engine")
-    if templates_url is None:
-        raise Exception(release["tag_name"] + " has no templates")
-
-    return GodotRelease(
-        version=version,
-        channel=channel,
-        engine_url=engine_url,
-        engine_archive_name=engine_archive_name,
-        engine_file_name=engine_file_name,
-        templates_url=templates_url,
-        templates_archive_name=templates_archive_name,
+def __topological_generators():
+    sorter = graphlib.TopologicalSorter()
+    for generator in GENERATORS:
+        sorter.add(generator.key, *generator.dependencies)
+    return map(
+        lambda generator_key: next(
+            filter(lambda generator: generator.key == generator_key, GENERATORS)
+        ),
+        sorter.static_order(),
     )
-
-
-def __load_releases(use_gh, debug):
-    if debug:
-        page_size = 25
-    else:
-        page_size = 100
-    releases = []
-    page = 1
-    # Load a single page for debug builds
-    while not debug or page == 1:
-        if use_gh:
-            release = json.loads(
-                subprocess.run(
-                    [
-                        "gh",
-                        "api",
-                        "--method",
-                        "GET",
-                        "repos/godotengine/godot-builds/releases",
-                        "-F",
-                        "per_page=" + str(page_size),
-                        "-F",
-                        "page=" + str(page),
-                    ],
-                    stdout=subprocess.PIPE,
-                ).stdout
-            )
-        else:
-            page_url = (
-                "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
-                + str(page_size)
-                + "&page=%s"
-            )
-            headers = {}
-            response = requests.get(page_url % page, headers=headers)
-            release = json.loads(response.content)
-            if response.status_code != 200:
-                raise Exception(
-                    "Failed to load releases "
-                    + str(response)
-                    + " "
-                    + str(response.content)
-                )
-        if len(release) == 0:
-            break
-        releases += release
-        page += 1
-    if debug:
-        print("Loaded " + str(len(releases)) + " releases")
-    return releases
-
-
-def __load_existing_versions(debug, tag):
-    if debug:
-        page_size = 5
-    else:
-        page_size = 100
-    existing_versions = []
-    url = (
-        "https://hub.docker.com/v2/namespaces/"
-        + tag.namespace
-        + "/repositories/"
-        + tag.repository
-        + "/tags"
-        + "?page_size="
-        + str(page_size)
-    )
-    while url:
-        response = requests.get(url)
-        response = json.loads(response.content)
-        existing_versions += map(lambda result: result["name"], response["results"])
-        url = response["next"]
-        # load only the first page for debugging
-        if debug:
-            return existing_versions
-
-    return existing_versions
 
 
 def __setup_parser():
@@ -212,9 +131,7 @@ def __setup_parser():
     )
 
     parser.add_argument(
-        "-i",
-        "--incremental",
-        action="store_true",
+        "--is_incremental",
         help="True to reupload existing docker images",
     )
 
@@ -234,12 +151,6 @@ def __setup_parser():
         default=False,
         action="store_true",
         help="Use GitHub cli for API request instead of rest",
-    )
-
-    parser.add_argument(
-        "--generation_scripts",
-        nargs="+",
-        help="Which script to load to generate the config. generate(existing_tags, is_debug) will be called on that script to proceed",
     )
 
     return parser
