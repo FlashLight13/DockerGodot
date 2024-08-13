@@ -1,8 +1,5 @@
 import yaml
-
-CIRCLE_CI_CONFIG_VERSION = 2.1
-CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
-CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
+import circle_ci_config
 
 # Docker file to build an image with
 DOCKER_FILE = "src/base/godot.dockerfile"
@@ -18,13 +15,17 @@ def create(generation_results, output_file):
     json_config = __config_template()
     if generation_results:
         for generation_result in generation_results:
-            json_config["jobs"][generation_result.job_name] = generation_result.job
-            json_config["workflows"]["publish"]["jobs"].append(generation_result.job_name)
+            json_config["jobs"][
+                generation_result.get_safe_job_name()
+            ] = generation_result.job
+            json_config["workflows"]["publish"]["jobs"].append(
+                generation_result.get_safe_job_name()
+            )
             if generation_result.dependencies:
                 for dependency in generation_result.dependencies:
-                    json_config["workflows"]["publish"]["jobs"][generation_result.job_name][
-                        "requires"
-                    ].append(dependency)
+                    json_config["workflows"]["publish"]["jobs"][
+                        generation_result.get_safe_job_name()
+                    ]["requires"].append(dependency)
     else:
         job_name = "empty_job"
         json_config["jobs"][job_name] = __job_template(
@@ -41,7 +42,7 @@ def create(generation_results, output_file):
 
 def __config_template():
     return {
-        "version": CIRCLE_CI_CONFIG_VERSION,
+        "version": circle_ci_config.CONFIG_VERSION,
         "jobs": {},
         "workflows": {
             "publish": {
@@ -54,7 +55,7 @@ def __config_template():
 def __job_template(steps):
     return {
         "docker": [
-            {"image": CIRCLE_CI_JOB_IMAGE},
+            {"image": circle_ci_config.JOB_IMAGE},
         ],
         "steps": steps,
     }
