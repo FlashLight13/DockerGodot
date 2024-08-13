@@ -39,11 +39,10 @@ def crawl(args) -> None:
     print("is_incremental=" + str(incremental))
 
     releases = map(__build_release_model, __load_releases(is_debug))
-    releases = filter(lambda release: release, releases)
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
-        print("==== Processing " + generation_module_path)
+        print("==== Start " + generation_module_path)
         generation_module = importlib.import_module(generation_module_path)
         if incremental:
             existing_versions = __load_existing_versions(
@@ -53,11 +52,15 @@ def crawl(args) -> None:
         else:
             existing_versions = []
             print("Force updating images")
-        releases = filter(
+        module_releases = filter(
             lambda release: release.version not in existing_versions, releases
         )
-        for release in releases:
-            generation_results.append(generation_module.generate(release))
+        for release in module_releases:
+            generation_result = generation_module.generate(release)
+            if (is_debug):
+                print("For " + str(release) + " adding: " + str(generation_result))
+            generation_results.append(generation_result)
+        print("==== Finish " + generation_module_path)
 
     with open(GENERATED_CONFIG_PATH, "w+") as outfile:
         create_config_yaml.create(generation_results, outfile)

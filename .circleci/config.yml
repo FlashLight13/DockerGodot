@@ -17,7 +17,7 @@ jobs:
       - setup_remote_docker:
           version: docker23
       - run: echo "Generating forced config"
-      - run: python src/generate_config.py -d -i --generation_scripts generate_core itch.generate_itch
+      - run: python src/generate_config.py -i --generation_scripts generate_core itch.generate_itch
       - continuation/continue:
           configuration_path: .circleci/images.yml # use newly generated config to continue
 

@@ -15,16 +15,14 @@ def create(generation_results, output_file):
     json_config = __config_template()
     if generation_results:
         for generation_result in generation_results:
-            json_config["jobs"][
-                generation_result.get_safe_job_name()
-            ] = generation_result.job
+            json_config["jobs"][generation_result.job_name] = generation_result.job
             json_config["workflows"]["publish"]["jobs"].append(
-                generation_result.get_safe_job_name()
+                generation_result.job_name
             )
             if generation_result.dependencies:
                 for dependency in generation_result.dependencies:
                     json_config["workflows"]["publish"]["jobs"][
-                        generation_result.get_safe_job_name()
+                        generation_result.job_name
                     ]["requires"].append(dependency)
     else:
         job_name = "empty_job"

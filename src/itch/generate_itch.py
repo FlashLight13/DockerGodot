@@ -20,7 +20,7 @@ def generate(release):
 
 
 def get_job_name(release):
-    return "publish-itch-" + release.version
+    return "publish-itch-" + release.version.replace('.', "_") 
 
 
 def get_docker_tag():

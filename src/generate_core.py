@@ -16,7 +16,7 @@ def generate(release):
 
 
 def get_job_name(release):
-    return "publish-core-" + release.version
+    return "publish-core-" + release.version.replace('.', "_") 
 
 
 def get_docker_tag():
