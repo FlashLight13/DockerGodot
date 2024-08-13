@@ -22,6 +22,7 @@ def docker_tag(release):
 
 
 def __steps_for_release(release):
+    tag = DOCKER_COORDINATES.path() + ":" + docker_tag(release)
     return [
         # checkout code
         "checkout",
@@ -43,8 +44,7 @@ def __steps_for_release(release):
         {
             "run": "docker build"
             + " "
-            + "--tag "
-            + (DOCKER_COORDINATES.path() + ":" + docker_tag(release))
+            + ("--tag " + tag)
             + " "
             + ("--build-arg godotVersion=" + release.version)
             + " "
@@ -70,5 +70,5 @@ def __steps_for_release(release):
             + "."
         },
         # Push the base image
-        {"run": "docker push " + docker_tag(release)},
+        {"run": "docker push " + tag},
     ]
