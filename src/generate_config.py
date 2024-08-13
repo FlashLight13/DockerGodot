@@ -5,6 +5,7 @@ import importlib
 from packaging.version import Version
 import requests
 import json
+import subprocess
 
 FIRST_SUPPORTED_MAJOR_VERSION = 3
 SUPPORTED_CHANNELS = ["stable"]
@@ -35,11 +36,17 @@ EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 def crawl(args) -> None:
     is_debug = args.is_debug or args.debug
     incremental = args.incremental
+    print("===========    ARGS    ===========")
     print("is_debug=" + str(is_debug))
     print("is_incremental=" + str(incremental))
+    print("==================================")
 
-    releases = map(__build_release_model, __load_releases(is_debug))
+    releases = map(
+        lambda release: __build_release_model(release, is_debug),
+        __load_releases(args.use_gh, is_debug),
+    )
     releases = filter(lambda release: release, releases)
+    releases = list(releases)
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
@@ -58,8 +65,8 @@ def crawl(args) -> None:
         )
         for release in module_releases:
             generation_result = generation_module.generate(release)
-            if (is_debug):
-                print("For " + str(release) + " adding: " + str(generation_result))
+            if is_debug:
+                print("For release " + str(release.version) + " adding job: " + str(generation_result.job_name))
             generation_results.append(generation_result)
         print("==== Finish " + generation_module_path)
 
@@ -67,14 +74,21 @@ def crawl(args) -> None:
         create_config_yaml.create(generation_results, outfile)
 
 
-def __build_release_model(release):
+def __build_release_model(release, is_debug):
     version = release["tag_name"].split("-")[0]
     channel = release["tag_name"].split("-")[1]
 
     if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
+        if is_debug:
+            print("Skipping unsupported version: " + str(version))
         return None
     if channel not in SUPPORTED_CHANNELS:
+        if is_debug:
+            print("Skipping unsupported channel: " + str(channel))
         return None
+
+    if is_debug:
+        print("Proceeding for version " + str(version))
 
     engine_url = None
     engine_file_name = None
@@ -112,38 +126,62 @@ def __build_release_model(release):
     )
 
 
-def __load_releases(debug):
+def __load_releases(use_gh, debug):
     if debug:
-        page_size = 5
+        page_size = 25
     else:
         page_size = 100
     releases = []
     page = 1
     # Load a single page for debug builds
     while not debug or page == 1:
-        page_url = (
-            "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
-            + str(page_size)
-            + "&page=%s"
-        )
-        headers = {}
-        response = requests.get(page_url % page, headers=headers)
-        release = json.loads(response.content)
-        if debug:
-            print("Loaded releases:" + str(release))
-        if response.status_code != 200:
-            raise Exception(
-                "Failed to load releases " + str(response) + " " + str(response.content)
+        if use_gh:
+            release = json.loads(
+                subprocess.run(
+                    [
+                        "gh",
+                        "api",
+                        "--method",
+                        "GET",
+                        "repos/godotengine/godot-builds/releases",
+                        "-F",
+                        "per_page=" + str(page_size),
+                        "-F",
+                        "page=" + str(page),
+                    ],
+                    stdout=subprocess.PIPE,
+                ).stdout
             )
+        else:
+            page_url = (
+                "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
+                + str(page_size)
+                + "&page=%s"
+            )
+            headers = {}
+            response = requests.get(page_url % page, headers=headers)
+            release = json.loads(response.content)
+            if response.status_code != 200:
+                raise Exception(
+                    "Failed to load releases "
+                    + str(response)
+                    + " "
+                    + str(response.content)
+                )
         if len(release) == 0:
             break
         releases += release
         page += 1
+    if debug:
+        print("Loaded " + str(len(releases)) + " releases")
     return releases
 
 
 def __load_existing_versions(debug, tag):
-    page_size = 100
+    if debug:
+        page_size = 5
+    else:
+        page_size = 100
     existing_versions = []
     url = (
         "https://hub.docker.com/v2/namespaces/"
@@ -189,6 +227,13 @@ def __setup_parser():
     parser.add_argument(
         "--is_debug",
         help="Enables debug mode (reduced page size and disabled images uploading)",
+    )
+
+    parser.add_argument(
+        "--use_gh",
+        default=False,
+        action="store_true",
+        help="Use GitHub cli for API request instead of rest",
     )
 
     parser.add_argument(
