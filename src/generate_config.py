@@ -39,6 +39,7 @@ def crawl(args) -> None:
     print("is_incremental=" + str(incremental))
 
     releases = map(__build_release_model, __load_releases(is_debug))
+    releases = list(releases)
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
