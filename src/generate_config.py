@@ -39,7 +39,7 @@ def crawl(args) -> None:
     print("is_incremental=" + str(incremental))
 
     releases = map(__build_release_model, __load_releases(is_debug))
-    releases = list(releases)
+    releases = filter(lambda release: release, releases)
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
@@ -119,7 +119,8 @@ def __load_releases(debug):
         page_size = 100
     releases = []
     page = 1
-    while True:
+    # Load a single page for debug builds
+    while not debug or page == 1:
         page_url = (
             "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
             + str(page_size)
@@ -141,16 +142,8 @@ def __load_releases(debug):
     return releases
 
 
-# Setup in CI
-DOCKER_LOGIN_ENV_CONST = "$DOCKERHUB_LOGIN"
-DOCKER_PASS_ENV_CONST = "$DOCKERHUB_PASSWORD"
-
-
 def __load_existing_versions(debug, tag):
-    if debug:
-        page_size = 5
-    else:
-        page_size = 100
+    page_size = 100
     existing_versions = []
     url = (
         "https://hub.docker.com/v2/namespaces/"
