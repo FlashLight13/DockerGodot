@@ -1,19 +1,16 @@
 from model.generation_result import GenerationResult
 from model.docker_tag import DockerTag
-
-CIRCLE_CI_CONFIG_VERSION = 2.1
-CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
-CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
+import circle_ci_config
 
 # Docker file to build an image with
 DOCKER_FILE = "src/godot.dockerfile"
 # https://hub.docker.com/repository/docker/flashlight13/godot
 
 
-def generate(release, credentials):
+def generate(release):
     return GenerationResult(
         job_name=get_job_name(release),
-        job=__job_template(__steps_for_release(release, credentials)),
+        job=__job_template(__steps_for_release(release)),
         dependencies=[],
     )
 
@@ -29,29 +26,35 @@ def get_docker_tag():
 def __job_template(steps):
     return {
         "docker": [
-            {"image": CIRCLE_CI_JOB_IMAGE},
+            {"image": circle_ci_config.JOB_IMAGE},
         ],
         "steps": steps,
     }
 
 
-def __steps_for_release(release, credentials):
-    docker_tag = get_docker_tag().namespace + "/" + get_docker_tag().repository + ":" + release.version
+def __steps_for_release(release):
+    docker_tag = (
+        get_docker_tag().namespace
+        + "/"
+        + get_docker_tag().repository
+        + ":"
+        + release.version
+    )
     return [
         # checkout code
         "checkout",
         {
             "setup_remote_docker": {
-                "version": CIRCLE_CI_REMOTE_DOCKER_VERSION,
-                "docker_layer_caching": True,
+                "version": circle_ci_config.REMOTE_DOCKER_VERSION,
+                "docker_layer_caching": circle_ci_config.DOCKER_LAYER_CACHING,
             }
         },
         # Login to the Docker
         {
             "run": "echo "
-            + credentials.pass_env
+            + circle_ci_config.DOCKER_PASS
             + " | docker login -u "
-            + credentials.login_env
+            + circle_ci_config.DOCKER_LOGIN
             + " --password-stdin",
         },
         # Build the base image

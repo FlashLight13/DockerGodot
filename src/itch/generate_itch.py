@@ -2,6 +2,7 @@ import generate_core as GenerateCore
 
 from model.generation_result import GenerationResult
 from model.docker_tag import DockerTag
+import circle_ci_config
 
 # Latest from https://github.com/itchio/butler/releases
 BUTLER_VERSION = "v15.21.0"
@@ -9,12 +10,8 @@ BUTLER_VERSION = "v15.21.0"
 # Docker file to build an image with
 DOCKER_FILE = "src/itch/itch.dockerfile"
 
-CIRCLE_CI_CONFIG_VERSION = 2.1
-CIRCLE_CI_JOB_IMAGE = "cimg/python:3.12.1"
-CIRCLE_CI_REMOTE_DOCKER_VERSION = "20.10.18"
 
-
-def generate(release, is_debug):
+def generate(release):
     return GenerationResult(
         job_name=get_job_name(release),
         job=__job_template(__steps_for_release(release)),
@@ -33,7 +30,7 @@ def get_docker_tag():
 def __job_template(steps):
     return {
         "docker": [
-            {"image": GenerateCore.CIRCLE_CI_JOB_IMAGE},
+            {"image": circle_ci_config.JOB_IMAGE},
         ],
         "steps": steps,
     }
@@ -52,16 +49,16 @@ def __steps_for_release(release):
         "checkout",
         {
             "setup_remote_docker": {
-                "version": GenerateCore.CIRCLE_CI_REMOTE_DOCKER_VERSION,
+                "version": circle_ci_config.REMOTE_DOCKER_VERSION,
                 "docker_layer_caching": True,
             }
         },
         # Login to the Docker
         {
             "run": "echo "
-            + GenerateCore.DOCKER_PASS_ENV_CONST
+            + circle_ci_config.DOCKER_PASS
             + " | docker login -u "
-            + GenerateCore.DOCKER_LOGIN_ENV_CONST
+            + circle_ci_config.DOCKER_LOGIN
             + " --password-stdin",
         },
         # Build the base image
@@ -75,24 +72,7 @@ def __steps_for_release(release):
             + release.version
             + " "
             + "--build-arg butlerVersion="
-            + release.engine_url
-            + " "
-            + "--build-arg engineArchiveName="
-            + release.engine_archive_name
-            + " "
-            + "--build-arg engineFileName="
-            + release.engine_file_name
-            + " "
-            + "--build-arg templatesUrl="
-            + release.templates_url
-            + " "
-            + "--build-arg templatesArchiveName="
-            + release.templates_archive_name
-            + " "
-            + "--build-arg templatesDirectory="
-            + release.version
-            + "."
-            + release.channel
+            + BUTLER_VERSION
             + " "
             + "-f "
             + DOCKER_FILE

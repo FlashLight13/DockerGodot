@@ -15,7 +15,7 @@ jobs:
       - run: python --version
       - run: pip install requests pyyaml packaging
       - setup_remote_docker:
-          version: 20.10.18
+          version: docker23
       - run: echo "Generating forced config"
       - run: python src/generate_config.py -d -i --generation_scripts generate_core itch.generate_itch
       - continuation/continue:

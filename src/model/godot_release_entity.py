@@ -1,16 +1,14 @@
 class GodotRelease:
 
     def __init__(
-            self,
-            version,
-            channel,
-
-            engine_url,
-            engine_file_name,
-            engine_archive_name,
-
-            templates_url,
-            templates_archive_name,
+        self,
+        version,
+        channel,
+        engine_url,
+        engine_file_name,
+        engine_archive_name,
+        templates_url,
+        templates_archive_name,
     ):
         self.version = version
         self.channel = channel

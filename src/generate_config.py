@@ -1,5 +1,4 @@
 from model.godot_release_entity import GodotRelease
-from model.docker_credentials import DockerCredentials
 import argparse
 import create_config_yaml
 import importlib
@@ -32,10 +31,6 @@ ENGINE_TEMPLATES = [
 # File template for Godot export templates
 EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 
-DOCKER_CREDENTIALS = DockerCredentials(
-    login_env="$DOCKERHUB_LOGIN", pass_env="$DOCKERHUB_PASSWORD"
-)
-
 
 def crawl(args) -> None:
     is_debug = args.is_debug or args.debug
@@ -62,9 +57,7 @@ def crawl(args) -> None:
             lambda release: release.version not in existing_versions, releases
         )
         for release in releases:
-            generation_results.append(
-                generation_module.generate(release, DOCKER_CREDENTIALS)
-            )
+            generation_results.append(generation_module.generate(release))
 
     with open(GENERATED_CONFIG_PATH, "w+") as outfile:
         create_config_yaml.create(generation_results, outfile)
@@ -134,7 +127,9 @@ def __load_releases(debug):
         if debug:
             print("Loaded releases:" + str(release))
         if response.status_code != 200:
-            raise Exception("Failed to load releases " + str(response) + " " + str(response.content))
+            raise Exception(
+                "Failed to load releases " + str(response) + " " + str(response.content)
+            )
         if len(release) == 0:
             break
         releases += release
