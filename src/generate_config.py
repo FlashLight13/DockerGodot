@@ -48,13 +48,13 @@ def crawl(args) -> None:
 
     generation_results = []
     for generation_module_path in args.generation_scripts:
-        print("==== Processing" + generation_module_path)
+        print("==== Processing " + generation_module_path)
         generation_module = importlib.import_module(generation_module_path)
         if incremental:
             existing_versions = __load_existing_versions(
                 is_debug, generation_module.get_docker_tag()
             )
-            print("Existing releases: " + ", ".join(existing_versions))
+            print("Existing releases:\n" + ", ".join(existing_versions))
         else:
             existing_versions = []
             print("Force updating images")
