@@ -3,7 +3,7 @@ from model.docker_coordinates import DockerCoordinates
 import circle_ci_config
 
 # Latest from https://github.com/itchio/butler/releases
-BUTLER_VERSION = "v15.21.0"
+BUTLER_VERSION = "15.21.0"
 
 # Docker file to build an image with
 DOCKER_FILE = "src/itch/itch.dockerfile"
