@@ -14,6 +14,7 @@ function help {
                                 https://github.com/godotengine/godot/issues/69511 for older Godot versions. 
                                 Defaults to false
        --butlerPushDestination  destination for butler push command
+                                Defaults to default
        --butlerParams           these parameters are passed to the Butler
 
   (m)  means that the parameter is mandatory.
@@ -21,6 +22,8 @@ function help {
 }
 
 DOUBLE_IMPORT=false
+BUTLER_PARAMETERS=""
+BUTLER_PUSH_DESTINATION="default"
 
 # Parse arguments
 for i in "$@"; do
@@ -66,7 +69,7 @@ for i in "$@"; do
     shift
     ;;
   *)
-    BUTLER_PARAMS="$BUTLER_PARAMS $1"
+    BUTLER_PARAMETERS="$BUTLER_PARAMETERS $1"
     shift
     ;;
   esac

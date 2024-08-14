@@ -19,6 +19,6 @@ RUN butler --version
 RUN mkdir -p /opt/exporter/
 COPY src/itch/exporter.sh /opt/exporter/exporter
 ENV PATH="$PATH:/opt/exporter/"
-RUN exporter --version
+RUN chmod u+x /opt/exporter/exporter && exporter --version
 
 ENTRYPOINT ["exporter"]
