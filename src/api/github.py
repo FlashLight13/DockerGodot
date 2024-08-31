@@ -1,13 +1,12 @@
 from model.godot_release_entity import GodotRelease
-import docker
-import github
-import arguments
-import create_config_yaml
 from packaging.version import Version
+import requests
+import json
+import subprocess
+
 
 FIRST_SUPPORTED_MAJOR_VERSION = 3
 SUPPORTED_CHANNELS = ["stable"]
-GENERATED_CONFIG_PATH = ".circleci/images.yml"
 # File templates for the Godot engine
 ENGINE_TEMPLATES = [
     {
@@ -31,36 +30,59 @@ ENGINE_TEMPLATES = [
 EXPORT_TEMPLATES_TEMPLATE = "Godot_v%s-%s_export_templates.tpz"
 
 
-def crawl(args) -> None:
-    debug = args.is_debug or args.debug
-    print("Debug enabled: " + str(debug))
-    if args.is_incremental:
-        existing_versions = docker.load_existing_versions(debug)
-        print("Existing releases: " + ', '.join(existing_versions))
+def load_releases(use_gh, debug):
+    if debug:
+        page_size = 25
     else:
-        existing_versions = []
-        print("Force updating images")
+        page_size = 100
+    releases = []
+    page = 1
+    # Load a single page for debug builds
+    while not debug or page == 1:
+        if use_gh:
+            release = json.loads(
+                subprocess.run(
+                    [
+                        "gh",
+                        "api",
+                        "--method",
+                        "GET",
+                        "repos/godotengine/godot-builds/releases",
+                        "-F",
+                        "per_page=" + str(page_size),
+                        "-F",
+                        "page=" + str(page),
+                    ],
+                    stdout=subprocess.PIPE,
+                ).stdout
+            )
+        else:
+            page_url = (
+                "https://api.github.com/repos/godotengine/godot-builds/releases?per_page="
+                + str(page_size)
+                + "&page=%s"
+            )
+            headers = {}
+            response = requests.get(page_url % page, headers=headers)
+            release = json.loads(response.content)
+            if response.status_code != 200:
+                raise Exception(
+                    "Failed to load releases "
+                    + str(response)
+                    + " "
+                    + str(response.content)
+                )
+        if len(release) == 0:
+            break
+        releases += release
+        page += 1
+    releases = map(lambda release: __build_release_model(release=release), releases)
+    return filter(lambda release: release, releases)
 
-    releases = map(build_release_model, github.load_releases(debug))
-    releases = filter(lambda release: release, releases)
-    releases = list(releases)
-    releases_log = map(
-        lambda release: release.printable_version(), releases)
-    print("Loaded releases: " + ", ".join(releases_log))
 
-    releases = filter(
-        lambda release: release.printable_version() not in existing_versions,
-        releases,
-    )
-    releases = list(releases)
-
-    with open(GENERATED_CONFIG_PATH, 'w+') as outfile:
-        create_config_yaml.create(releases, outfile)
-
-
-def build_release_model(release):
-    version = release["tag_name"].split('-')[0]
-    channel = release["tag_name"].split('-')[1]
+def __build_release_model(release):
+    version = release["tag_name"].split("-")[0]
+    channel = release["tag_name"].split("-")[1]
 
     if Version(version).major < FIRST_SUPPORTED_MAJOR_VERSION:
         return None
@@ -77,13 +99,11 @@ def build_release_model(release):
     for asset in release["assets"]:
         if engine_url is None:
             for engine_template in ENGINE_TEMPLATES:
-                file_name = engine_template["archive_name"] % (
-                    version, channel)
+                file_name = engine_template["archive_name"] % (version, channel)
                 if asset["name"] == file_name:
                     engine_url = asset["browser_download_url"]
                     engine_archive_name = file_name
-                    engine_file_name = engine_template["file_name"] % (
-                        version, channel)
+                    engine_file_name = engine_template["file_name"] % (version, channel)
         if templates_url is None:
             file_name = EXPORT_TEMPLATES_TEMPLATE % (version, channel)
             if asset["name"] == file_name:
@@ -97,21 +117,9 @@ def build_release_model(release):
     return GodotRelease(
         version=version,
         channel=channel,
-
         engine_url=engine_url,
         engine_archive_name=engine_archive_name,
         engine_file_name=engine_file_name,
-
         templates_url=templates_url,
         templates_archive_name=templates_archive_name,
     )
-
-
-def main():
-    parser = arguments.setup_parser()
-    args = parser.parse_args()
-    crawl(args)
-
-
-if __name__ == '__main__':
-    main()

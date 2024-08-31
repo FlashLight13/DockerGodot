@@ -1,6 +1,4 @@
-ARG ubuntuVersion
-
-FROM ubuntu:$ubuntuVersion AS base
+FROM debian:12.4-slim AS base
 
 ARG engineUrl
 ARG engineArchiveName
@@ -10,11 +8,8 @@ ARG templatesUrl
 ARG templatesArchiveName
 ARG templatesDirectory
 
-# Setup apt-get
-RUN apt-get update
-
-# Install basics
-RUN apt-get install -y \
+# Setup apt-get and install basics
+RUN apt-get update && apt-get install -y \
     wget \
     unzip
 
@@ -25,10 +20,6 @@ RUN wget $engineUrl \
     && mv $engineFileName godot \
     && mv godot /usr/bin/
 
-# Install Godot deps
-RUN apt-get install -y \
-    libfontconfig
-
 # Install Godot templates
 ENV GODOT_TEMPLATES_DIR="/root/.local/share/godot/export_templates"
 RUN wget $templatesUrl \
@@ -38,4 +29,4 @@ RUN wget $templatesUrl \
     && mv templates ${GODOT_TEMPLATES_DIR} \
     && mv ${GODOT_TEMPLATES_DIR}/templates ${GODOT_TEMPLATES_DIR}/$templatesDirectory
 
-CMD godot
+ENTRYPOINT ["godot"]

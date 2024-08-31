@@ -11,13 +11,14 @@ RUN apt-get install zip
 # Install Itch.io butler
 ENV BUTLER_HOME=/opt/butler
 RUN wget https://broth.itch.ovh/butler/linux-amd64/${butlerVersion}/archive/default \
-    && unzip default -d ${BUTLER_HOME} \
-    && export PATH="$BUTLER_HOME:$PATH" \
-    && butler -v
+    && unzip default -d ${BUTLER_HOME}
+ENV PATH="$PATH:$BUTLER_HOME"
+RUN butler --version
 
 # Setup exporter
 RUN mkdir -p /opt/exporter/
-COPY exporter.sh /opt/exporter/exporter.sh
-RUN alias exporter="bash /opt/exporter/exporter.sh" && exporter -v
+COPY src/itch/exporter.sh /opt/exporter/exporter
+ENV PATH="$PATH:/opt/exporter/"
+RUN chmod u+x /opt/exporter/exporter && exporter --version
 
-CMD $EXPORT_SCRIPT
+ENTRYPOINT ["exporter"]
