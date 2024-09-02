@@ -16,14 +16,16 @@ function help {
        --butlerPushDestination  destination for butler push command
                                 Defaults to default
        --butlerParams           these parameters are passed to the Butler
+       --push                   to push the result to itch.io
 
   (m)  means that the parameter is mandatory.
   "
 }
 
 DOUBLE_IMPORT=false
+SHOULD_PUSH=false
 BUTLER_PARAMETERS=""
-BUTLER_PUSH_DESTINATION="default"
+BUTLER_PUSH_DESTINATION=""
 
 # Parse arguments
 for i in "$@"; do
@@ -50,6 +52,10 @@ for i in "$@"; do
     ;;
   --doubleImport)
     DOUBLE_IMPORT=true
+    shift 1
+    ;;
+  --push)
+    SHOULD_PUSH=true
     shift 1
     ;;
   --artifactPath=*)
@@ -81,9 +87,15 @@ echo "outputPath=$OUTPUT_PATH"
 echo "buildPreset=$BUILD_PRESET"
 echo "butlerPushDestination=$BUTLER_PUSH_DESTINATION"
 echo "doubleImport=$DOUBLE_IMPORT"
+echo "push=$SHOULD_PUSH"
 
-if [ -z "$PROJECT_PATH" ] || [ -z "$OUTPUT_PATH" ] || [ -z "$BUILD_PRESET" ] || [ -z "$BUTLER_PUSH_DESTINATION" ]; then
-  echo "One or more parameter is missing"
+if [ "$SHOULD_PUSH" = true ] && [ -z "$BUTLER_PUSH_DESTINATION" ]; then
+  echo "Specify butlerPushDestination when pushing"
+  exit 1
+fi
+
+if [ -z "$PROJECT_PATH" ] || [ -z "$OUTPUT_PATH" ] || [ -z "$BUILD_PRESET" ]; then
+  echo "projectPath, outputPath or buildPreset is missing"
   exit 1
 fi
 if [ -z "$ARTIFACT_PATH" ]; then
@@ -108,5 +120,7 @@ echo "PUSHING THE BUILD"
 mkdir -p "$ARTIFACT_PATH"
 zip -rj "$ARTIFACT_PATH"/"$ARTIFACT_FILE_NAME".zip "$OUTPUT_PATH"/
 
-# Upload
-butler push "$ARTIFACT_PATH"/"$ARTIFACT_FILE_NAME".zip "$BUTLER_PUSH_DESTINATION" "$BUTLER_PARAMETERS"
+if [ "$SHOULD_PUSH" = true ]; then
+  # Upload
+  butler push "$ARTIFACT_PATH"/"$ARTIFACT_FILE_NAME".zip "$BUTLER_PUSH_DESTINATION" "$BUTLER_PARAMETERS"
+fi
