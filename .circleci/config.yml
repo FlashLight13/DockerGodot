@@ -24,4 +24,8 @@ jobs:
 workflows:
   setup_publish:
     jobs:
-      - setup
+      - setup:
+          filters:
+            branches:
+              only:
+                - release
