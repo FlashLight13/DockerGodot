@@ -89,8 +89,13 @@ echo "butlerPushDestination=$BUTLER_PUSH_DESTINATION"
 echo "doubleImport=$DOUBLE_IMPORT"
 echo "push=$SHOULD_PUSH"
 
-if [ -z "$PROJECT_PATH" ] || [ -z "$OUTPUT_PATH" ] || [ -z "$BUILD_PRESET" ] || [ -z "$BUTLER_PUSH_DESTINATION" ]; then
-  echo "One or more parameter is missing"
+if [ "$SHOULD_PUSH" = true ] && [ -z "$BUTLER_PUSH_DESTINATION" ]; then
+  echo "Specify butlerPushDestination when pushing"
+  exit 1
+fi
+
+if [ -z "$PROJECT_PATH" ] || [ -z "$OUTPUT_PATH" ] || [ -z "$BUILD_PRESET" ]; then
+  echo "projectPath, outputPath or buildPreset is missing"
   exit 1
 fi
 if [ -z "$ARTIFACT_PATH" ]; then
